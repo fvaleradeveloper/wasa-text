@@ -68,10 +68,7 @@ vercel --prod
 Configura estas variables en Vercel (Settings > Environment Variables) - OPCIONAL:
 
 ```env
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=tu_email@gmail.com
-SMTP_PASS=tu_app_password_de_gmail
+RESEND_API_KEY=tu_api_key_de_resend
 NODE_ENV=production
 ```
 

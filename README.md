@@ -40,12 +40,10 @@ Aplicación para extraer y organizar transacciones de chats de WhatsApp usando u
    # Copia el archivo de ejemplo
    cp .env.example .env
    
-   # Edita .env con tus credenciales SMTP para recibir notificaciones
-   # Para Gmail:
-   SMTP_HOST=smtp.gmail.com
-   SMTP_PORT=587
-   SMTP_USER=tu_email@gmail.com
-   SMTP_PASS=tu_app_password_de_gmail
+   # Edita .env con tu API key de Resend para recibir notificaciones
+   # 1. Crea una cuenta en https://resend.com
+   # 2. Obtén tu API key en el dashboard
+   RESEND_API_KEY=tu_api_key_de_resend
    ```
 
 4. Ejecuta la aplicación:
@@ -131,10 +129,7 @@ Parsea un chat de WhatsApp y extrae transacciones.
 
 1. Conecta tu repositorio
 2. Configura las variables de entorno en la plataforma (opcional, solo para notificaciones):
-   - `SMTP_HOST=smtp.gmail.com`
-   - `SMTP_PORT=587`
-   - `SMTP_USER=tu_email@gmail.com`
-   - `SMTP_PASS=tu_app_password_de_gmail`
+   - `RESEND_API_KEY=tu_api_key_de_resend`
 3. Despliega
 
 ### Docker

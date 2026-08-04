@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 interface EmailNotification {
   email: string;
@@ -6,34 +6,31 @@ interface EmailNotification {
   createdAt: string;
 }
 
-function getTransporter() {
-  const host = process.env.SMTP_HOST || "smtp.gmail.com";
-  const port = parseInt(process.env.SMTP_PORT || "587");
-  const user = process.env.SMTP_USER || "";
-  const pass = process.env.SMTP_PASS || "";
+let resendClient: Resend | null = null;
 
-  // If SMTP credentials are not configured, log a warning
-  if (!user || !pass) {
+function getResendClient(): Resend | null {
+  if (resendClient) {
+    return resendClient;
+  }
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
     console.warn(
-      "⚠️ SMTP not configured. Email notifications will not be sent. " +
-      "Set SMTP_USER, SMTP_PASS, SMTP_HOST, and SMTP_PORT in .env"
+      "⚠️ RESEND_API_KEY not configured. Email notifications will not be sent. " +
+      "Set RESEND_API_KEY in Vercel environment variables."
     );
     return null;
   }
 
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
+  resendClient = new Resend(apiKey);
+  return resendClient;
 }
 
 export async function sendNewSignupNotification(
   signup: EmailNotification
 ): Promise<void> {
-  const transporter = getTransporter();
-  if (!transporter) {
+  const client = getResendClient();
+  if (!client) {
     console.log("📧 [DEV] New signup notification would be sent to fvalera.developer@gmail.com");
     console.log(`📧 [DEV] Signer email: ${signup.email}`);
     console.log(`📧 [DEV] Total signups: ${signup.totalSignups}`);
@@ -87,12 +84,18 @@ Total suscriptores: ${signup.totalSignups}
   `;
 
   try {
-    await transporter.sendMail({
-      from: `"Wasa-Text" <${process.env.SMTP_USER}>`,
-      to: ownerEmail,
+    await client.emails.send({
+      from: "Wasa-Text <notifications@resend.dev>",
+      to: [ownerEmail],
       subject: `🎉 Nuevo suscriptor: ${signup.email}`,
       html,
       text,
+      tags: [
+        {
+          name: "category",
+          value: "wasaptext",
+        },
+      ],
     });
     console.log(`✅ Notification email sent to ${ownerEmail} about ${signup.email}`);
   } catch (error) {
