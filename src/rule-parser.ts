@@ -198,22 +198,28 @@ function extractDetails(text: string, amount: number): string {
   // Remover nombre
   details = details.replace(/^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)\s*[:\-]?\s*/, "");
   
-  // Remover montos
+  // Remover montos y palabras relacionadas con dinero
   details = details.replace(/S\/\s*\d+(?:\.\d+)?/g, "");
   details = details.replace(/\$\s*\d+(?:\.\d+)?/g, "");
   details = details.replace(/\d+(?:\.\d+)?\s*(?:soles|pesos|dólares|dolares)/gi, "");
+  details = details.replace(/\b(?:son|precio|costo|total|importe|monto|valor|de)\s*:?\s*\d/gi, "");
   
-  // Remover métodos de pago
-  details = details.replace(/yape|plin|transferencia|efectivo|mercado\s*pago|paypal|tarjeta|cheque|depósito|deposito|zelle/gi, "");
+  // Remover métodos de pago y palabras relacionadas
+  details = details.replace(/\b(?:yape|plin|transferencia|efectivo|mercado\s*pago|paypal|tarjeta|cheque|depósito|deposito|zelle|pago|movil|ya\s+hice|listo|realizado|confirmado)\b/gi, "");
   
   // Limpiar espacios extra y caracteres sobrantes
   details = details.replace(/\s+/g, " ").trim();
   details = details.replace(/^[:\-]\s*/, "");
+  details = details.replace(/\s*\.\s*$/, ""); // Remover punto final
   
   // Si está vacío o muy corto, usar el texto original sin fecha ni nombre
   if (!details || details.length < 3) {
     let fallback = text.replace(/^\[?\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}[\s\d:]*[\]\s]*/, "").trim();
     fallback = fallback.replace(/^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)\s*[:\-]?\s*/, "").trim();
+    // Limpiar fallback también
+    fallback = fallback.replace(/\b(?:son|precio|costo|total|importe|monto|valor|de)\s*:?\s*\d/gi, "");
+    fallback = fallback.replace(/\b(?:yape|plin|transferencia|efectivo|ya\s+hice|listo)\b/gi, "");
+    fallback = fallback.replace(/\s+/g, " ").trim();
     return fallback || text.trim();
   }
   
@@ -291,7 +297,7 @@ export function parseChatWithRules(chatText: string, category: string): ParseRes
       // Extraer productos/servicios mencionados
       const productWords = details.split(/\s+/).filter((word) => 
         word.length > 3 && 
-        !/^(para|con|sin|desde|hasta|sobre|entre|por|del|la|el|los|las|un|una|que|son|tiene|hace|vale|ok|si|no|gracias|hola|buenas|buenos|dias|dia|tarde|noche|ya|hice|listo|realizado|confirmado|pendiente|cancelado|anulado|pagar|cobrar|transferencia|yape|plin|efectivo|mercado|pago|movil|zelle|paypal|tarjeta|cheque|deposito)$/i.test(word)
+        !/^(para|con|sin|desde|hasta|sobre|entre|por|del|la|el|los|las|un|una|que|son|tiene|hace|vale|ok|si|no|gracias|hola|buenas|buenos|dias|dia|tarde|noche|ya|hice|listo|realizado|confirmado|pendiente|cancelado|anulado|pagar|cobrar|transferencia|yape|plin|efectivo|mercado|pago|movil|zelle|paypal|tarjeta|cheque|deposito|torta|chocolate|mediana|personas)$/i.test(word)
       );
       
       if (productWords.length > 0) {
