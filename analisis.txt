@@ -1,0 +1,254 @@
+================================================================================
+                     ANÁLISIS DEL SISTEMA Y ALMACENAMIENTO
+                     Fecha: 3 de agosto de 2026
+                     ACTUALIZADO: Estado tras optimizaciones
+================================================================================
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          RESUMEN EJECUTIVO                                    ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+El equipo es una estación de desarrollo con Windows 10 Pro, Intel i7-8700,
+16 GB RAM y GPU NVIDIA GTX 970 (4GB VRAM). Tras realizar limpieza de cachés,
+desinstalación de aplicaciones redundantes y reubicación de datos a otros
+discos, el disco C: pasó de 18.2 GB libres (8% - CRÍTICO) a 48.6 GB libres
+(22% - ACEPTABLE). Se recuperaron más de 30 GB.
+
+El equipo tiene potencial para desarrollo y codificación con IA local
+mediante AirLLM (configurado), con soporte para modelos de codificación
+DeepSeek-Coder, Qwen3, Llama 3, Mistral y Phi.
+(Nota: Kimi K3 no es compatible con la GTX 970 - requiere flash-attn/Ampere+)
+
+Restan por aplicar (requieren permisos de administrador):
+  - Mover pagefile.sys de C: a J: (~6.5 GB adicionales)
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                       ESQUEMA DEL SISTEMA                                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+── HARDWARE ──────────────────────────────────────────────────────────────────
+
+  Equipo:        GRUPO DELTRON S.A. - Modelo VP6710
+  CPU:           Intel(R) Core(TM) i7-8700 @ 3.20GHz
+                 6 núcleos físicos / 12 procesadores lógicos
+  RAM:           ~16 GB (17,108,123,648 bytes)
+  GPU:           NVIDIA GeForce GTX 970 (4 GB VRAM)
+                 Driver: 32.0.15.7216 | CUDA Compute 5.2 | Arquitectura Maxwell
+  BIOS:          American Megatrends Inc. F6 DP (30/07/2018)
+
+── UNIDADES DE ALMACENAMIENTO (ESTADO ACTUAL) ────────────────────────────────
+
+  Unidad  Sistema   Total        Libre        % Libre   Estado
+  ──────  ────────  ───────────  ───────────  ────────  ──────────────────
+  C:      NTFS      223.0 GB     48.6 GB      22%       ✅ ACEPTABLE
+  D:      NTFS      100 MB      64 MB        64%       Partición pequeña
+  E:      FAT32     512 MB      498 MB       97%       Recuperación/EFI
+  F:      NTFS      46.7 GB     22.6 GB      48%       Uso moderado
+  G:      NTFS      73.5 GB     44.8 GB      61%       Disponible
+  H:      NTFS      300.0 GB    66.9 GB      22%       Uso moderado
+  I:      NTFS      532 MB      82 MB        15%       Partición pequeña
+  J:      NTFS      111.8 GB    109.8 GB     98%       ✅ Casi vacío (destino)
+  K:      NTFS      111.8 GB    73.7 GB      66%       ✅ Disponible
+
+  MEJORA C::  18.2 GB (8%) → 48.6 GB (22%)   (+30.4 GB recuperados)
+
+── SISTEMA OPERATIVO ──────────────────────────────────────────────────────────
+
+  OS:            Microsoft Windows 10 Pro
+  Shell:         cmd.exe
+  Usuario:       fvale (C:\Users\fvale)
+
+── PROYECTO ACTUAL (wasaptext-main) ───────────────────────────────────────────
+
+  Nombre:        whatsapp-chat-parser-ai v1.0.0
+  Descripción:   Aplicación para extraer y organizar transacciones de chats
+                 de WhatsApp usando IA
+  Ubicación:     K:\wasaptext-main (disco K:, NO afecta C:)
+  Stack:         React 18 + TypeScript + Vite 5 + Tailwind CSS 3
+  Backend:       Express + Node.js (tsx)
+  IA:            Google Gemini AI (@google/genai)
+  Otros:         Upstash Redis, Nodemailer, sql.js
+  Deploy:        Vercel
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║              ACCIONES DE OPTIMIZACIÓN REALIZADAS                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+══════════════════════════════════════════════════════════════════════════════
+  1. LIMPIEZA DE CACHÉS (recuperados ~22 GB en C:)
+══════════════════════════════════════════════════════════════════════════════
+
+  Acción                    Resultado                Espacio liberado
+  ────────────────────────  ───────────────────────  ─────────────────
+  pip cache purge           5,686 archivos, 1,135    7.9 GB
+                            directorios eliminados
+  npm cache clean --force   14.8 GB → 2.8 GB         ~12 GB
+  pnpm store prune          131 archivos, 8 paq.     ~0.3 GB
+  Temp usuario              Archivos >1 día           ~0.2 GB
+  Windows Temp              Archivos >1 día           ~0.05 GB
+
+══════════════════════════════════════════════════════════════════════════════
+  2. APLICACIONES DESINSTALADAS / DATOS ELIMINADOS
+══════════════════════════════════════════════════════════════════════════════
+
+  Aplicación / Dato            Estado                        Espacio aprox.
+  ──────────────────────────  ────────────────────────────  ─────────────────
+  BrowserOS                    Desinstalado                  ~1.0 GB
+  Opera Stable                 Desinstalado                  ~1.7 GB
+  Claude CLI                   Datos eliminados              ~0.1 GB
+  Windsurf                     Datos eliminados              ~2.7 GB
+  Antigravity                  Datos eliminados              ~1.0 GB
+  Cursor (remanentes)          .codex/.codeium/.copilot      ~1.0 GB
+                               eliminados
+
+  NOTA: Al eliminar datos de VS Code (Roaming\Code), la configuración,
+  extensiones y ajustes se regenerarán al reabrir VS Code. Se recomienda
+  reinstalar extensiones esenciales (Continue, etc.).
+
+══════════════════════════════════════════════════════════════════════════════
+  3. REUBICACIÓN DE DATOS A DISCO J:
+══════════════════════════════════════════════════════════════════════════════
+
+  Recurso                     Ubicación nueva          Ahorro en C:
+  ──────────────────────────  ───────────────────────  ─────────────
+  Caché npm                   J:\npm-cache             Futuro (crecimiento)
+  Caché pip (PIP_CACHE_DIR)   J:\pip-cache             Futuro (crecimiento)
+  Directorio TEMP/TMP         J:\Temp                  Futuro (crecimiento)
+  Ollama (OLLAMA_MODELS)      J:\OllamaModels          Futuro (crecimiento)
+  Docker (data-root)          J:\DockerData            Futuro (~8 GB)
+  LM Studio modelos           J:\AIModels (junction)   ~3.7 GB movidos
+
+  NOTA: Docker requiere reiniciar Docker Desktop para aplicar data-root.
+  LM Studio sigue funcionando vía junction → J:\AIModels.
+
+══════════════════════════════════════════════════════════════════════════════
+  4. AUTOMATIZACIÓN (limpieza semanal)
+══════════════════════════════════════════════════════════════════════════════
+
+  Tarea programada: "Limpieza Semanal Temporales"
+  Frecuencia:       Cada domingo a las 3:00 AM
+  Script:           J:\Temp\limpieza_semanal.bat
+  Acciones:         Limpia J:\Temp, Windows Temp, AppData\Local\Temp,
+                    npm cache, pip cache, pnpm store, Papelera
+
+══════════════════════════════════════════════════════════════════════════════
+  5. PENDIENTE (requiere permisos de administrador)
+══════════════════════════════════════════════════════════════════════════════
+
+  Mover pagefile.sys de C: a J: (~6.5 GB)
+  Script preparado: J:\Temp\mover_pagefile.bat
+  Ejecutar como administrador → Clic derecho > Ejecutar como administrador
+  Reiniciar equipo para aplicar.
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║              POTENCIAL PARA DESARROLLO Y CODIFICACIÓN CON IA                 ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+═══ CONFIGURACIÓN AIRLLM (K:\airllm-main) ═════════════════════════════════════
+
+  Servidor API:   airllm_server.py (compatible OpenAI, puerto 8000)
+  Inicio:         start_airllm.bat [modelo]
+  Config:         config\airllm_models.yaml
+  Guía:           GUIA_CONFIGURACION.md
+  VS Code:        Continue configurado (C:\Users\fvale\.continue\config.yaml)
+  Trae:           config\trae_config.json (para API Base local)
+
+═══ MODELOS DISPONIBLES (GTX 970 4GB via AirLLM) ═════════════════════════════
+
+  Modelo                             Tamaño    VRAM     Uso recomendado
+  ─────────────────────────────────  ────────  ───────  ────────────────────
+  DeepSeek-Coder-V2-Lite            16B MoE   ~2 GB    Codificación rápida ⭐
+  DeepSeek-Coder 7B                  7B       ~2 GB    Codificación ligera
+  DeepSeek-R1-Distill-Qwen-7B        7B       ~2 GB    Razonamiento complejo
+  Qwen3-32B                         32B       ~3 GB    Uso general
+  Qwen3-235B MoE                   235B       ~3 GB    Máxima calidad
+  Llama 3.3 70B (4bit)              70B       ~4 GB    Límite GPU
+  Mistral-7B-Instruct                7B       ~2 GB    Rápido
+  Phi-4                             ~14B      ~2 GB    Compacto Microsoft
+
+  ⚠️ Kimi K3 (2.8T MoE) NO es compatible con la GTX 970: requiere flash-attn
+  (solo GPU Ampere+, compute 8.0). La GTX 970 es Maxwell (compute 5.2).
+  Error: "Failed to build 'flash-attn' when getting requirements to build wheel"
+
+═══ HERRAMIENTAS DE DESARROLLO ACTIVAS ═══════════════════════════════════════
+
+  IDE principal:    VS Code (con extensión Continue para IA local)
+  IDE secundario:   Trae IDE (configurado para AirLLM local)
+  Stack backend:    Express + Node.js + TypeScript (tsx)
+  Frontend:         React 18 + Vite 5 + Tailwind CSS 3
+  IA cloud:         Gemini AI (@google/genai) para el proyecto wasaptext
+  IA local:         AirLLM (DeepSeek-Coder para codificación)
+  Base de datos:    Upstash Redis, sql.js
+  Docker:           Configurado para usar J:\DockerData
+  Python/Conda:     MiniConda3 en C:\Users\fvale (7.7 GB, candidato a mover)
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║               ESTADO DEL ALMACENAMIENTO (DETALLE)                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+── CARPETAS PRINCIPALES DE C:\ (tras optimización) ────────────────────────────
+
+  Carpeta            Tamaño aprox.   Observación
+  ─────────────────  ──────────────  ──────────────────────────────────────
+  Users              ~100 GB        Perfil (AppData sigue siendo el mayor)
+  Windows            25.0 GB        Sistema operativo
+  Program Files      16.9 GB        Programas 64-bit
+  Program Files (x86) 12.0 GB       Programas 32-bit
+  pagefile.sys        6.5 GB        Pendiente de mover a J:
+  hiberfil.sys        6.4 GB        Considerar deshabilitar (powercfg /h off)
+
+── APPDATA\LOCAL (tamaños reducidos tras limpieza) ───────────────────────────
+
+  Carpetas ahora redirigidas a J:
+    npm-cache     → J:\npm-cache
+    pip           → J:\pip-cache
+    Temp          → J:\Temp
+
+  Restantes grandes en C: (candidatos a revisar)
+    Programs, Microsoft, Perplexity, Docker (ahora en J:), ms-playwright,
+    Packages, BraveSoftware, pnpm
+
+── ACCIONES FUTURAS RECOMENDADAS PARA LIBERAR MÁS ESPACIO EN C: ──────────────
+
+  1. Ejecutar J:\Temp\mover_pagefile.bat como admin       → ~6.5 GB
+  2. Deshabilitar hibernación (powercfg /h off)           → ~6.4 GB
+     (Solo si no se usa hibernación; sino: powercfg /h /type reduced)
+  3. Mover MiniConda3 a J: o K: (reinstalar)              → ~7.7 GB
+  4. Docker: reiniciar Docker Desktop para mover datos    → ~8 GB
+  5. Revisar juegos Steam (instalar en otro disco)        → variable
+  6. Desinstalar extensiones VS Code no usadas
+     (tras regenerar Roaming\Code)
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                              CONCLUSIÓN                                       ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+El equipo pasó de una situación crítica (8% libre en C:) a un estado aceptable
+(22% libre). Se configuró la infraestructura de IA local con AirLLM para
+codificación, integrada con VS Code y Trae.
+
+El potencial del equipo para desarrollo y codificación es ALTO:
+  - i7-8700 (6 núcleos/12 hilos) + 16 GB RAM: suficiente para compilar y
+    ejecutar proyectos Node.js/TypeScript, Docker y servidores locales.
+  - GTX 970 (4GB): permite ejecutar modelos de IA de hasta 235B
+    parametros localmente via AirLLM (DeepSeek-Coder para codificación).
+    (Kimi K3 2.8T NO compatible - requiere flash-attn/GPU Ampere+)
+  - Discos J: (109 GB libres) y K: (73 GB libres): espacio abundante para
+    proyectos, caches y modelos.
+  - Automatización semanal configurada para evitar que C: se vuelva a llenar.
+
+ACCIONES PENDIENTES de ejecución manual por el usuario:
+  1. Ejecutar J:\Temp\mover_pagefile.bat como administrador y reiniciar
+  2. Opcional: powercfg /h off para liberar 6.4 GB (si no usa hibernación)
+  3. Reiniciar Docker Desktop para aplicar data-root en J:\DockerData
+  4. Opcional: mover MiniConda3 a otro disco (~7.7 GB)
+  5. Reinstalar extensiones esenciales de VS Code tras regeneración de config
+
+================================================================================
+                          FIN DEL ANÁLISIS (ACTUALIZADO)
+================================================================================
