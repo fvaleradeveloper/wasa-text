@@ -2,40 +2,18 @@
 <img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
 </div>
 
-# WhatsApp Chat Parser con IA
+# WhatsApp Chat Parser
 
-Aplicación para extraer y organizar transacciones de chats de WhatsApp usando Inteligencia Artificial. Soporta múltiples proveedores de IA: Groq, OpenAI, Anthropic, Google Gemini, y cualquier API compatible con OpenAI.
+Aplicación para extraer y organizar transacciones de chats de WhatsApp usando un algoritmo basado en reglas. No requiere IA externa ni API keys. Funciona 100% offline y es compatible con formatos de toda América Latina.
 
 ## Características
 
-- 🤖 Soporte múltiple de proveedores de IA (Groq, OpenAI, Anthropic, Google Gemini, Custom)
+- ⚡ 100% automático - Sin necesidad de IA externa
 - 📊 Extracción automática de transacciones de chats de WhatsApp
+- 🌎 Compatible con formatos de toda América Latina (Chile, Argentina, Perú, Bolivia, Paraguay, Uruguay, Colombia, Venezuela, Guatemala, etc.)
 - 💰 Cálculo de resúmenes financieros (ingresos totales, pedidos, pagados, pendientes)
 - 🎨 Interfaz intuitiva y fácil de usar
-- 🔒 Las API keys se envían directamente al proveedor, no se almacenan en servidores
-
-## Proveedores de IA Soportados
-
-### 1. Groq (IA Cloud Gratuita - Recomendado)
-- Modelos: Llama 3.3 70B Versatile, Llama 3.1 8B Instant, etc.
-- Obtén tu API key en: [GroqCloud](https://console.groq.com/keys)
-- Endpoint: `https://api.groq.com/openai/v1`
-
-### 2. Google Gemini
-- Modelos: Gemini 2.0 Flash, Gemini 1.5 Pro, etc.
-- Obtén tu API key en: [Google AI Studio](https://aistudio.google.com/app/apikey)
-
-### 3. OpenAI
-- Modelos: GPT-4o, GPT-4o-mini, GPT-4-turbo, etc.
-- Obtén tu API key en: [OpenAI Platform](https://platform.openai.com/api-keys)
-
-### 4. Anthropic
-- Modelos: Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus, etc.
-- Obtén tu API key en: [Anthropic Console](https://console.anthropic.com/)
-
-### 5. API Personalizada
-- Cualquier API compatible con OpenAI (Ollama, LM Studio, OpenRouter, etc.)
-- Solo necesitas la URL base de la API
+- 🔒 No requiere API keys ni servicios externos
 
 ## Ejecutar Localmente
 
@@ -56,37 +34,18 @@ Aplicación para extraer y organizar transacciones de chats de WhatsApp usando I
    npm install
    ```
 
-3. Configura tu API key en el archivo `.env`:
+3. Configura las notificaciones por email (opcional):
    
    ```bash
    # Copia el archivo de ejemplo
    cp .env.example .env
    
-   # Edita .env con tu configuración
-   # Para Groq (recomendado):
-   AI_PROVIDER=groq
-   GROQ_API_KEY=tu_api_key_de_groq
-   GROQ_MODEL=llama-3.3-70b-versatile
-   
-   # Para Google Gemini:
-   # AI_PROVIDER=google
-   # AI_API_KEY=tu_api_key_de_gemini
-   
-   # Para OpenAI:
-   # AI_PROVIDER=openai
-   # AI_API_KEY=tu_api_key_de_openai
-   # AI_MODEL=gpt-4o-mini
-   
-   # Para Anthropic:
-   # AI_PROVIDER=anthropic
-   # AI_API_KEY=tu_api_key_de_anthropic
-   # AI_MODEL=claude-3-5-haiku-20241022
-   
-   # Para API personalizada:
-   # AI_PROVIDER=custom
-   # AI_API_KEY=tu_api_key
-   # AI_MODEL=nombre_del_modelo
-   # AI_BASE_URL=https://api.tu-servicio.com/v1
+   # Edita .env con tus credenciales SMTP para recibir notificaciones
+   # Para Gmail:
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USER=tu_email@gmail.com
+   SMTP_PASS=tu_app_password_de_gmail
    ```
 
 4. Ejecuta la aplicación:
@@ -171,11 +130,11 @@ Parsea un chat de WhatsApp y extrae transacciones.
 ### Vercel / Netlify / Railway
 
 1. Conecta tu repositorio
-2. Configura las variables de entorno en la plataforma:
-   - `AI_PROVIDER=groq`
-   - `GROQ_API_KEY=tu_api_key_de_groq`
-   - `GROQ_MODEL=llama-3.3-70b-versatile`
-   - (O las variables correspondientes a tu proveedor)
+2. Configura las variables de entorno en la plataforma (opcional, solo para notificaciones):
+   - `SMTP_HOST=smtp.gmail.com`
+   - `SMTP_PORT=587`
+   - `SMTP_USER=tu_email@gmail.com`
+   - `SMTP_PASS=tu_app_password_de_gmail`
 3. Despliega
 
 ### Docker

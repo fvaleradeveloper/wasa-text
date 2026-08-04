@@ -1,0 +1,312 @@
+export interface ParsedTransaction {
+  id: string;
+  date: string;
+  customerName: string;
+  contact: string;
+  details: string;
+  quantity: number;
+  amount: number;
+  paymentMethod: string;
+  status: "Pagado" | "Pendiente" | "Cancelado";
+  originalText: string;
+}
+
+export interface ParseSummary {
+  totalRevenue: number;
+  totalOrders: number;
+  paidCount: number;
+  pendingCount: number;
+  topProducts: string[];
+}
+
+export interface ParseResult {
+  summary: ParseSummary;
+  items: ParsedTransaction[];
+}
+
+// Patrones de fecha para América Latina
+const DATE_PATTERNS = [
+  /\[(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/,
+  /(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/,
+  /\[(\d{1,2}\s+de\s+\w+\s+de?\s+\d{2,4})/i,
+];
+
+// Patrones de monto en monedas latinoamericanas
+const AMOUNT_PATTERNS = [
+  /S\/\s*(\d+(?:\.\d+)?)/, // Soles peruanos
+  /\$\s*(\d+(?:\.\d+)?)/, // Pesos/dólares general
+  /(\d+(?:\.\d+)?)\s*(?:soles|pesos|dólares|dolares)/i,
+  /(?:precio|costo|total|son|importe|monto|valor)[:\s]+[$\s]*(\d+(?:\.\d+)?)/i,
+  /(\d+(?:\.\d+)?)\s*(?:s\/|\$|usd|ars|clp|cop|vef|bob|pyg|uyu|gtq)/i,
+];
+
+// Patrones de métodos de pago comunes en LATAM
+const PAYMENT_METHODS = [
+  /yape/i,
+  /plin/i,
+  /transferencia/i,
+  /efectivo/i,
+  /mercado\s*pago/i,
+  /paypal/i,
+  /tarjeta/i,
+  /cheque/i,
+  /depósito/i,
+  /deposito/i,
+  /zelle/i,
+  /pago\s+móvil/i,
+  /pago\s+movil/i,
+];
+
+// Patrones de estado
+const STATUS_PATTERNS = [
+  /pagado/i,
+  /cancelado/i,
+  /anulado/i,
+  /pendiente/i,
+  /por\s+cobrar/i,
+  /por\s+pagar/i,
+  /confirmado/i,
+];
+
+// Palabras clave para filtrar líneas relevantes
+const RELEVANT_KEYWORDS = [
+  /pedido/i,
+  /orden/i,
+  /compra/i,
+  /venta/i,
+  /precio/i,
+  /costo/i,
+  /total/i,
+  /pago/i,
+  /cobro/i,
+  /transfer/i,
+  /yape/i,
+  /plin/i,
+  /s\/\s*\d/,
+  /\$\s*\d/,
+  /\d+\s*(?:soles|pesos|dólares)/i,
+];
+
+function extractDate(text: string): string {
+  for (const pattern of DATE_PATTERNS) {
+    const match = text.match(pattern);
+    if (match) {
+      return match[1] || match[0];
+    }
+  }
+  return new Date().toLocaleDateString("es-PE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+function extractAmount(text: string): number {
+  for (const pattern of AMOUNT_PATTERNS) {
+    const match = text.match(pattern);
+    if (match) {
+      const amount = parseFloat(match[1] || match[0]);
+      if (!isNaN(amount) && amount > 0) {
+        return amount;
+      }
+    }
+  }
+  return 0;
+}
+
+function extractPaymentMethod(text: string): string {
+  for (const pattern of PAYMENT_METHODS) {
+    const match = text.match(pattern);
+    if (match) {
+      return match[0].charAt(0).toUpperCase() + match[0].slice(1).toLowerCase();
+    }
+  }
+  return "N/A";
+}
+
+function extractStatus(text: string): "Pagado" | "Pendiente" | "Cancelado" {
+  const lowerText = text.toLowerCase();
+  
+  if (/cancelado|anulado/.test(lowerText)) {
+    return "Cancelado";
+  }
+  if (/pagado|confirmado|ya\s+hice|listo|realizado/.test(lowerText)) {
+    return "Pagado";
+  }
+  if (/pendiente|por\s+cobrar|por\s+pagar|falta|esperando/.test(lowerText)) {
+    return "Pendiente";
+  }
+  
+  // Default: si hay monto y método de pago, asumir pendiente
+  const hasAmount = extractAmount(text) > 0;
+  const hasPaymentMethod = extractPaymentMethod(text) !== "N/A";
+  
+  if (hasAmount && hasPaymentMethod) {
+    return "Pendiente";
+  }
+  
+  return "Pendiente";
+}
+
+function extractCustomerName(text: string): string {
+  // Remover la fecha del inicio
+  let cleaned = text.replace(/^\[?\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}[\]\s]*/, "");
+  cleaned = cleaned.replace(/^\[?\d{1,2}\s+de\s+\w+.*?\]\s*/, "");
+  
+  // Buscar patrones de nombre: "Nombre:" o "Nombre -" al inicio
+  const nameMatch = cleaned.match(/^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)\s*[:\-]/);
+  if (nameMatch) {
+    return nameMatch[1];
+  }
+  
+  // Si no hay patrón claro, tomar las primeras palabras antes de dos puntos o guión
+  const parts = cleaned.split(/[:\-]/);
+  if (parts.length > 0) {
+    const firstPart = parts[0].trim();
+    const words = firstPart.split(/\s+/).slice(0, 3);
+    return words.join(" ");
+  }
+  
+  return "Cliente";
+}
+
+function extractContact(text: string): string {
+  // Buscar números de teléfono en formatos latinoamericanos
+  const phonePatterns = [
+    /(\+?\d{1,3}[\s\-]?\d{3,4}[\s\-]?\d{3,4}[\s\-]?\d{0,4})/,
+    /(\d{3,4}[\s\-]?\d{3,4}[\s\-]?\d{3,4})/,
+  ];
+  
+  for (const pattern of phonePatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      return match[1];
+    }
+  }
+  
+  return "";
+}
+
+function extractDetails(text: string, amount: number): string {
+  // Remover fecha, nombre, monto y método de pago para obtener detalles
+  let details = text;
+  
+  // Remover fecha
+  details = details.replace(/^\[?\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}[\]\s]*/, "");
+  details = details.replace(/^\[?\d{1,2}\s+de\s+\w+.*?\]\s*/, "");
+  
+  // Remover nombre
+  details = details.replace(/^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)\s*[:\-]?\s*/, "");
+  
+  // Remover montos
+  details = details.replace(/S\/\s*\d+(?:\.\d+)?/g, "");
+  details = details.replace(/\$\s*\d+(?:\.\d+)?/g, "");
+  details = details.replace(/\d+(?:\.\d+)?\s*(?:soles|pesos|dólares|dolares)/gi, "");
+  
+  // Remover métodos de pago
+  details = details.replace(/yape|plin|transferencia|efectivo|mercado\s*pago|paypal|tarjeta|cheque|depósito|deposito|zelle/gi, "");
+  
+  // Limpiar espacios extra
+  details = details.replace(/\s+/g, " ").trim();
+  
+  // Si está vacío, usar el texto original
+  if (!details || details.length < 3) {
+    return text.replace(/^\[?\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}[\]\s]*/, "").trim();
+  }
+  
+  return details;
+}
+
+function isRelevantLine(text: string): boolean {
+  const lowerText = text.toLowerCase();
+  
+  // Si tiene monto, es relevante
+  if (extractAmount(text) > 0) return true;
+  
+  // Si tiene palabras clave
+  for (const pattern of RELEVANT_KEYWORDS) {
+    if (pattern.test(lowerText)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+export function parseChatWithRules(chatText: string, category: string): ParseResult {
+  const lines = chatText.split("\n").filter((line) => line.trim().length > 0);
+  const items: ParsedTransaction[] = [];
+  const productsSet = new Set<string>();
+  
+  let totalRevenue = 0;
+  let paidCount = 0;
+  let pendingCount = 0;
+  let idCounter = 1;
+  
+  for (const line of lines) {
+    if (!isRelevantLine(line)) {
+      continue;
+    }
+    
+    const amount = extractAmount(line);
+    const date = extractDate(line);
+    const customerName = extractCustomerName(line);
+    const contact = extractContact(line);
+    const paymentMethod = extractPaymentMethod(line);
+    const status = extractStatus(line);
+    const details = extractDetails(line, amount);
+    
+    // Solo agregar si tiene monto o es una línea relevante
+    if (amount > 0 || status !== "Pendiente") {
+      const item: ParsedTransaction = {
+        id: `TX-${String(idCounter).padStart(3, "0")}`,
+        date,
+        customerName,
+        contact,
+        details: details || line.trim(),
+        quantity: 1,
+        amount,
+        paymentMethod,
+        status,
+        originalText: line.trim(),
+      };
+      
+      items.push(item);
+      idCounter++;
+      
+      // Actualizar contadores
+      if (amount > 0) {
+        totalRevenue += amount;
+      }
+      
+      if (status === "Pagado") {
+        paidCount++;
+      } else if (status === "Pendiente") {
+        pendingCount++;
+      }
+      
+      // Extraer productos/servicios mencionados
+      const productWords = details.split(/\s+/).filter((word) => 
+        word.length > 3 && 
+        !/^(para|con|sin|desde|hasta|sobre|entre|por|con|del|la|el|los|las|un|una|que|con|sin|son|son|tiene|tiene|hace|hace|vale|vale|ok|ok|si|si|no|no|gracias|hola|buenas|buenos|buenas|dias|dia|tarde|noche)$/i.test(word)
+      );
+      
+      if (productWords.length > 0) {
+        productsSet.add(productWords[0].toLowerCase());
+      }
+    }
+  }
+  
+  const summary: ParseSummary = {
+    totalRevenue,
+    totalOrders: items.length,
+    paidCount,
+    pendingCount,
+    topProducts: Array.from(productsSet).slice(0, 5),
+  };
+  
+  return {
+    summary,
+    items,
+  };
+}

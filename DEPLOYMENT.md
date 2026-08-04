@@ -16,14 +16,14 @@ Esta guía te ayudará a desplegar Wasa-Text en GitHub y Vercel.
 # En la raíz del proyecto
 git init
 git add .
-git commit -m "Initial commit: Wasa-Text - WhatsApp Chat Parser with AI"
+git commit -m "Initial commit: Wasa-Text - WhatsApp Chat Parser"
 ```
 
 ### 1.2 Crear repositorio en GitHub
 
 1. Ve a https://github.com/new
 2. Nombre del repositorio: `wasa-text`
-3. Descripción: `Extrae y organiza transacciones de WhatsApp con IA`
+3. Descripción: `Extrae y organiza transacciones de WhatsApp automáticamente`
 4. Selecciona "Private" o "Public" según tu preferencia
 5. NO inicialices con README, .gitignore o licencia (ya los tenemos)
 6. Click en "Create repository"
@@ -43,10 +43,11 @@ git push -u origin main
 
 1. Ve a https://vercel.com/new
 2. Importa el repositorio `wasa-text` desde GitHub
-3. Configura las variables de entorno:
-   - `AI_PROVIDER` = `groq`
-   - `GROQ_API_KEY` = `tu-api-key-de-groq`
-   - `GROQ_MODEL` = `llama-3.3-70b-versatile`
+3. Configura las variables de entorno (opcional, solo para notificaciones):
+   - `SMTP_HOST=smtp.gmail.com`
+   - `SMTP_PORT=587`
+   - `SMTP_USER=tu_email@gmail.com`
+   - `SMTP_PASS=tu_app_password_de_gmail`
 4. Click en "Deploy"
 
 ### 2.2 Opción B: Deploy con Vercel CLI
@@ -64,12 +65,13 @@ vercel --prod
 
 ## ⚙️ Variables de Entorno en Vercel
 
-Configura estas variables en Vercel (Settings > Environment Variables):
+Configura estas variables en Vercel (Settings > Environment Variables) - OPCIONAL:
 
 ```env
-AI_PROVIDER=groq
-GROQ_API_KEY=tu_api_key_de_groq
-GROQ_MODEL=llama-3.3-70b-versatile
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=tu_email@gmail.com
+SMTP_PASS=tu_app_password_de_gmail
 NODE_ENV=production
 ```
 

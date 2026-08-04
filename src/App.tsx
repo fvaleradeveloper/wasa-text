@@ -161,8 +161,8 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-6">
-              <span className="mr-2">✨</span>
-              <span>NUEVO: Ahora con IA avanzada para extracción inteligente</span>
+              <span className="mr-2">⚡</span>
+              <span>100% Automático - Sin necesidad de IA externa</span>
             </div>
             
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-[#1F2E28] mb-6 leading-tight">
@@ -170,7 +170,7 @@ function App() {
             </h1>
             
             <p className="text-xl sm:text-2xl text-gray-700 mb-8 leading-relaxed">
-              Cansado de copia y pega? <strong className="text-[#1F2E28]">Extrae y organiza transacciones</strong> de tus chats de WhatsApp con IA
+              Cansado de copia y pega? <strong className="text-[#1F2E28]">Extrae y organiza transacciones</strong> de tus chats de WhatsApp automáticamente
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -260,9 +260,9 @@ function App() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-[#1F2E28] mb-2">2. IA procesa</h3>
+              <h3 className="text-xl font-bold text-[#1F2E28] mb-2">2. Algoritmo procesa</h3>
               <p className="text-gray-600">
-                Nuestra IA extrae automáticamente pedidos, montos, clientes y estados de pago
+                Nuestro algoritmo detecta automáticamente pedidos, montos, clientes y estados de pago
               </p>
             </div>
 

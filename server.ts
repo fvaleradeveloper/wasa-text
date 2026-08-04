@@ -1,28 +1,15 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import { createAIProvider, AIConfig, AIMessage } from "./src/ai-service.js";
 import { saveEmailSignup, getEmailSignupCount, getAllEmailSignups } from "./src/email-service.js";
 import { sendNewSignupNotification } from "./src/notification-service.js";
+import { parseChatWithRules } from "./src/rule-parser.js";
 
 // Load environment variables
 dotenv.config();
 
 const isProduction = process.env.NODE_ENV === "production";
 const PORT = 3000;
-
-// Cache for AI providers (keyed by provider+apiKey combination)
-const aiProviderCache = new Map<string, ReturnType<typeof createAIProvider>>();
-
-function getAIProvider(providerConfig: AIConfig) {
-  const cacheKey = `${providerConfig.provider}:${providerConfig.apiKey}:${providerConfig.model || ""}`;
-  
-  if (!aiProviderCache.has(cacheKey)) {
-    aiProviderCache.set(cacheKey, createAIProvider(providerConfig));
-  }
-  
-  return aiProviderCache.get(cacheKey)!;
-}
 
 async function createApp() {
   const app = express();
@@ -118,97 +105,10 @@ async function createApp() {
         return;
       }
 
-      // Use environment variables for AI configuration
-      // Provider defaults to "groq" when GROQ_API_KEY is set, otherwise "google"
-      const provider = (process.env.AI_PROVIDER as any) || (process.env.GROQ_API_KEY ? "groq" : "google");
-      const config: AIConfig = {
-        provider,
-        apiKey: process.env.AI_API_KEY || process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || "",
-        model: process.env.AI_MODEL || process.env.GROQ_MODEL,
-        baseURL: process.env.AI_BASE_URL,
-      };
+      // Use rule-based parser (no AI required)
+      const result = parseChatWithRules(chatText, category || "General");
 
-      if (!config.apiKey) {
-        console.error("API key not found.");
-        res.status(500).json({ 
-          error: "API key no configurada. Por favor, contacta al administrador." 
-        });
-        return;
-      }
-
-      const client = getAIProvider(config);
-
-      const systemInstruction = `Eres un asistente experto en contabilidad y organización de datos de negocios. 
-Tu tarea es analizar un registro de conversación de WhatsApp de un negocio (categoría: ${category || "general"}) y estructurar la información financiera y de pedidos.
-Extrae todos los pedidos, ventas, cobros, pagos, gastos o transacciones de forma precisa.
-
-Para cada transacción extraída, debes identificar:
-- Fecha de la transacción (estimada o extraída, en formato DD/MM/AAAA)
-- Nombre del cliente o contacto
-- Detalles (qué compró, qué servicio contrató, o qué gasto se realizó)
-- Cantidad (número de items, por defecto 1)
-- Monto (valor monetario, número entero o decimal)
-- Método de pago (Yape, Plin, Transferencia, Efectivo, Tarjeta, etc., o "N/A" si no se especifica)
-- Estado del pago: "Pagado" si hay confirmación de pago o transferencia; "Pendiente" si es una cotización o pedido por cobrar; "Cancelado" si se canceló.
-- Texto original o línea de la conversación de la cual se extrajo.
-
-Además, calcula un resumen consolidado con los totales.
-
-IMPORTANTE: Debes retornar la respuesta en formato JSON válido con la siguiente estructura exacta:
-{
-  "summary": {
-    "totalRevenue": <número>,
-    "totalOrders": <número>,
-    "paidCount": <número>,
-    "pendingCount": <número>,
-    "topProducts": [<array de strings>]
-  },
-  "items": [
-    {
-      "id": <string>,
-      "date": <string DD/MM/AAAA>,
-      "customerName": <string>,
-      "contact": <string>,
-      "details": <string>,
-      "quantity": <número>,
-      "amount": <número>,
-      "paymentMethod": <string>,
-      "status": <"Pagado" | "Pendiente" | "Cancelado">,
-      "originalText": <string>
-    }
-  ]
-}`;
-
-      const messages: AIMessage[] = [
-        {
-          role: "user",
-          content: `Analiza el siguiente chat de WhatsApp de un negocio de tipo ${category || "General"} y genera la tabla estructurada en formato JSON:
-
---- INICIO DEL CHAT ---
-${chatText}
---- FIN DEL CHAT ---
-
-Por favor, procesa con cuidado y retorna SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código. Solo el JSON puro.`,
-        },
-      ];
-
-      const response = await client.chat(messages, systemInstruction);
-
-      // Parse the JSON response
-      let parsedData;
-      try {
-        // Try to extract JSON from the response (in case there's extra text)
-        const jsonMatch = response.content.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-          throw new Error("No se encontró JSON válido en la respuesta");
-        }
-        parsedData = JSON.parse(jsonMatch[0]);
-      } catch (parseError) {
-        console.error("Error parsing AI response:", response.content);
-        throw new Error("La IA no retornó un JSON válido. Por favor, intenta de nuevo.");
-      }
-
-      res.json(parsedData);
+      res.json(result);
     } catch (error: any) {
       console.error("Error al procesar el chat:", error);
       res.status(500).json({ error: error.message || "Error interno del servidor al procesar el chat." });
