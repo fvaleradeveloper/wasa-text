@@ -149,8 +149,8 @@ function extractStatus(text: string): "Pagado" | "Pendiente" | "Cancelado" {
 }
 
 function extractCustomerName(text: string): string {
-  // Remover la fecha del inicio
-  let cleaned = text.replace(/^\[?\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}[\]\s]*/, "");
+  // Remover la fecha del inicio: [dd/mm/yyyy hh:mm:ss] o [dd de mes de yyyy]
+  let cleaned = text.replace(/^\[?\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}[\s\d:]*[\]\s]*/, "");
   cleaned = cleaned.replace(/^\[?\d{1,2}\s+de\s+\w+.*?\]\s*/, "");
   
   // Buscar patrones de nombre: "Nombre:" o "Nombre -" al inicio
@@ -191,8 +191,8 @@ function extractDetails(text: string, amount: number): string {
   // Remover fecha, nombre, monto y método de pago para obtener detalles
   let details = text;
   
-  // Remover fecha
-  details = details.replace(/^\[?\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}[\]\s]*/, "");
+  // Remover fecha incluyendo la hora: [dd/mm/yyyy hh:mm:ss]
+  details = details.replace(/^\[?\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}[\s\d:]*[\]\s]*/, "");
   details = details.replace(/^\[?\d{1,2}\s+de\s+\w+.*?\]\s*/, "");
   
   // Remover nombre
@@ -206,12 +206,15 @@ function extractDetails(text: string, amount: number): string {
   // Remover métodos de pago
   details = details.replace(/yape|plin|transferencia|efectivo|mercado\s*pago|paypal|tarjeta|cheque|depósito|deposito|zelle/gi, "");
   
-  // Limpiar espacios extra
+  // Limpiar espacios extra y caracteres sobrantes
   details = details.replace(/\s+/g, " ").trim();
+  details = details.replace(/^[:\-]\s*/, "");
   
-  // Si está vacío, usar el texto original
+  // Si está vacío o muy corto, usar el texto original sin fecha ni nombre
   if (!details || details.length < 3) {
-    return text.replace(/^\[?\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}[\]\s]*/, "").trim();
+    let fallback = text.replace(/^\[?\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}[\s\d:]*[\]\s]*/, "").trim();
+    fallback = fallback.replace(/^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)\s*[:\-]?\s*/, "").trim();
+    return fallback || text.trim();
   }
   
   return details;
@@ -288,7 +291,7 @@ export function parseChatWithRules(chatText: string, category: string): ParseRes
       // Extraer productos/servicios mencionados
       const productWords = details.split(/\s+/).filter((word) => 
         word.length > 3 && 
-        !/^(para|con|sin|desde|hasta|sobre|entre|por|con|del|la|el|los|las|un|una|que|con|sin|son|son|tiene|tiene|hace|hace|vale|vale|ok|ok|si|si|no|no|gracias|hola|buenas|buenos|buenas|dias|dia|tarde|noche)$/i.test(word)
+        !/^(para|con|sin|desde|hasta|sobre|entre|por|del|la|el|los|las|un|una|que|son|tiene|hace|vale|ok|si|no|gracias|hola|buenas|buenos|dias|dia|tarde|noche|ya|hice|listo|realizado|confirmado|pendiente|cancelado|anulado|pagar|cobrar|transferencia|yape|plin|efectivo|mercado|pago|movil|zelle|paypal|tarjeta|cheque|deposito)$/i.test(word)
       );
       
       if (productWords.length > 0) {
