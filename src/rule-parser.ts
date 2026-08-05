@@ -238,35 +238,52 @@ export function parseChatWithRules(chatText: string, category: string): ParseRes
   let pendingCount = 0;
   let idCounter = 1;
   
-  // Detectar el nombre del dueño del negocio (quien envía mensajes como confirmaciones)
+  // Detectar el nombre del dueño del negocio
   const ownerName = detectOwnerName(lines);
   
+  // Agrupar líneas por cliente
+  const customerGroups = new Map<string, string[]>();
+  
   for (const line of lines) {
-    if (!isRelevantLine(line)) {
+    const customerName = extractCustomerName(line);
+    
+    // Saltar mensajes del dueño del negocio
+    if (customerName === ownerName || customerName === "Cliente") {
       continue;
     }
     
-    const amount = extractAmount(line);
-    const date = extractDate(line);
-    const customerName = extractCustomerName(line);
-    const contact = extractContact(line);
-    const paymentMethod = extractPaymentMethod(line);
-    const status = extractStatus(line);
-    const details = extractDetails(line, amount);
+    // Agrupar mensajes del mismo cliente
+    if (!customerGroups.has(customerName)) {
+      customerGroups.set(customerName, []);
+    }
+    customerGroups.get(customerName)!.push(line);
+  }
+  
+  // Procesar cada grupo de cliente
+  for (const [customerName, customerLines] of customerGroups.entries()) {
+    // Combinar todas las líneas del cliente para extraer información
+    const combinedText = customerLines.join(" ");
     
-    // Solo agregar si tiene monto o es una línea relevante
-    if (amount > 0 || status !== "Pendiente") {
+    const amount = extractAmount(combinedText);
+    const date = extractDate(customerLines[0]);
+    const contact = extractContact(combinedText);
+    const paymentMethod = extractPaymentMethod(combinedText);
+    const status = extractStatus(combinedText);
+    const details = extractDetails(combinedText, amount);
+    
+    // Solo agregar si tiene monto o es relevante
+    if (amount > 0 || isRelevantLine(combinedText)) {
       const item: ParsedTransaction = {
         id: `TX-${String(idCounter).padStart(3, "0")}`,
         date,
         customerName,
         contact,
-        details: details || line.trim(),
+        details: details || customerLines[customerLines.length - 1].trim(),
         quantity: 1,
         amount,
         paymentMethod,
         status,
-        originalText: line.trim(),
+        originalText: customerLines.join("\n"),
       };
       
       items.push(item);
