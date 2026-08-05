@@ -247,8 +247,12 @@ export function parseChatWithRules(chatText: string, category: string): ParseRes
   for (const line of lines) {
     const customerName = extractCustomerName(line);
     
-    // Saltar mensajes del dueño del negocio
-    if (customerName === ownerName || customerName === "Cliente") {
+    // Saltar mensajes del dueño del negocio (comparación flexible)
+    const isOwner = customerName === ownerName || 
+                    customerName.startsWith(ownerName) ||
+                    ownerName.startsWith(customerName);
+    
+    if (isOwner || customerName === "Cliente") {
       continue;
     }
     
