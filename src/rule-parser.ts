@@ -240,6 +240,7 @@ export function parseChatWithRules(chatText: string, category: string): ParseRes
   
   // Detectar el nombre del dueño del negocio
   const ownerName = detectOwnerName(lines);
+  console.log("🔍 Owner name detected:", ownerName);
   
   // Agrupar líneas por cliente
   const customerGroups = new Map<string, string[]>();
@@ -247,10 +248,14 @@ export function parseChatWithRules(chatText: string, category: string): ParseRes
   for (const line of lines) {
     const customerName = extractCustomerName(line);
     
+    console.log("🔍 Processing:", line.substring(0, 60), "->", customerName);
+    
     // Saltar mensajes del dueño del negocio (comparación flexible)
     const isOwner = customerName === ownerName || 
                     customerName.startsWith(ownerName) ||
                     ownerName.startsWith(customerName);
+    
+    console.log("🔍 Is owner?", isOwner, "| ownerName:", ownerName);
     
     if (isOwner || customerName === "Cliente") {
       continue;
