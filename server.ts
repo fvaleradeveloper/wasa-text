@@ -105,10 +105,111 @@ async function createApp() {
         return;
       }
 
-      // Use rule-based parser (no AI required)
-      const result = parseChatWithRules(chatText, category || "General");
+      // Use Groq AI for parsing
+      const groqApiKey = process.env.GROQ_API_KEY;
+      const groqModel = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
-      res.json(result);
+      if (!groqApiKey) {
+        res.status(500).json({ 
+          error: "API key de Groq no configurada. Por favor, contacta al administrador." 
+        });
+        return;
+      }
+
+      const systemInstruction = `Eres un asistente experto en contabilidad y organización de datos de negocios. 
+Tu tarea es analizar un registro de conversación de WhatsApp de un negocio (categoría: ${category || "general"}) y estructurar la información financiera y de pedidos.
+Extrae todos los pedidos, ventas, cobros, pagos, gastos o transacciones de forma precisa.
+
+Para cada transacción extraída, debes identificar:
+- Fecha de la transacción (estimada o extraída, en formato DD/MM/AAAA)
+- Nombre del cliente o contacto
+- Detalles (qué compró, qué servicio contrató, o qué gasto se realizó)
+- Cantidad (número de items, por defecto 1)
+- Monto (valor monetario, número entero o decimal)
+- Método de pago (Yape, Plin, Transferencia, Efectivo, Tarjeta, etc., o "N/A" si no se especifica)
+- Estado del pago: "Pagado" si hay confirmación de pago o transferencia; "Pendiente" si es una cotización o pedido por cobrar; "Cancelado" si se canceló.
+- Texto original o línea de la conversación de la cual se extrajo.
+
+IMPORTANTE: Debes retornar la respuesta en formato JSON válido con la siguiente estructura exacta:
+{
+  "summary": {
+    "totalRevenue": <número>,
+    "totalOrders": <número>,
+    "paidCount": <número>,
+    "pendingCount": <número>,
+    "topProducts": [<array de strings>]
+  },
+  "items": [
+    {
+      "id": <string>,
+      "date": <string DD/MM/AAAA>,
+      "customerName": <string>,
+      "contact": <string>,
+      "details": <string>,
+      "quantity": <número>,
+      "amount": <número>,
+      "paymentMethod": <string>,
+      "status": <"Pagado" | "Pendiente" | "Cancelado">,
+      "originalText": <string>
+    }
+  ]
+}`;
+
+      const messages = [
+        {
+          role: "user",
+          content: `Analiza el siguiente chat de WhatsApp de un negocio de tipo ${category || "General"} y genera la tabla estructurada en formato JSON:
+
+--- INICIO DEL CHAT ---
+${chatText}
+--- FIN DEL CHAT ---
+
+Por favor, procesa con cuidado y retorna SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código. Solo el JSON puro.`,
+        },
+      ];
+
+      // Call Groq API
+      const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${groqApiKey}`,
+        },
+        body: JSON.stringify({
+          model: groqModel,
+          messages: [
+            { role: "system", content: systemInstruction },
+            ...messages,
+          ],
+          temperature: 0.3,
+          max_tokens: 4096,
+        }),
+      });
+
+      if (!groqResponse.ok) {
+        const errorData = await groqResponse.json().catch(() => ({}));
+        console.error("Groq API error:", errorData);
+        throw new Error(errorData.error?.message || `Groq API error: ${groqResponse.status}`);
+      }
+
+      const groqData = await groqResponse.json();
+      const aiContent = groqData.choices[0]?.message?.content || "";
+
+      // Parse the JSON response
+      let parsedData;
+      try {
+        // Try to extract JSON from the response (in case there's extra text)
+        const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error("No se encontró JSON válido en la respuesta");
+        }
+        parsedData = JSON.parse(jsonMatch[0]);
+      } catch (parseError) {
+        console.error("Error parsing AI response:", aiContent);
+        throw new Error("La IA no retornó un JSON válido. Por favor, intenta de nuevo.");
+      }
+
+      res.json(parsedData);
     } catch (error: any) {
       console.error("Error al procesar el chat:", error);
       res.status(500).json({ error: error.message || "Error interno del servidor al procesar el chat." });

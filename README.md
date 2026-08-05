@@ -4,16 +4,16 @@
 
 # WhatsApp Chat Parser
 
-Aplicación para extraer y organizar transacciones de chats de WhatsApp usando un algoritmo basado en reglas. No requiere IA externa ni API keys. Funciona 100% offline y es compatible con formatos de toda América Latina.
+Aplicación para extraer y organizar transacciones de chats de WhatsApp usando **Groq IA**. Extracción inteligente de pedidos, montos, clientes y estados de pago. Compatible con formatos de toda América Latina.
 
 ## Características
 
-- ⚡ 100% automático - Sin necesidad de IA externa
+- 🤖 IA avanzada con Groq (Llama 3.3 70B) para extracción inteligente
 - 📊 Extracción automática de transacciones de chats de WhatsApp
 - 🌎 Compatible con formatos de toda América Latina (Chile, Argentina, Perú, Bolivia, Paraguay, Uruguay, Colombia, Venezuela, Guatemala, etc.)
 - 💰 Cálculo de resúmenes financieros (ingresos totales, pedidos, pagados, pendientes)
 - 🎨 Interfaz intuitiva y fácil de usar
-- 🔒 No requiere API keys ni servicios externos
+- ⚡ Rápido y gratuito con tier gratuito de Groq
 
 ## Ejecutar Localmente
 
@@ -34,12 +34,22 @@ Aplicación para extraer y organizar transacciones de chats de WhatsApp usando u
    npm install
    ```
 
-3. Configura las notificaciones por email (opcional):
+3. Configura Groq IA (requerido):
    
    ```bash
    # Copia el archivo de ejemplo
    cp .env.example .env
    
+   # Edita .env con tu API key de Groq
+   # 1. Crea una cuenta gratuita en https://console.groq.com/keys
+   # 2. Obtén tu API key
+   GROQ_API_KEY=gsk_tu_api_key_de_groq
+   GROQ_MODEL=llama-3.3-70b-versatile
+   ```
+
+4. Configura las notificaciones por email (opcional):
+   
+   ```bash
    # Edita .env con tu API key de Resend para recibir notificaciones
    # 1. Crea una cuenta en https://resend.com
    # 2. Obtén tu API key en el dashboard
@@ -128,8 +138,10 @@ Parsea un chat de WhatsApp y extrae transacciones.
 ### Vercel / Netlify / Railway
 
 1. Conecta tu repositorio
-2. Configura las variables de entorno en la plataforma (opcional, solo para notificaciones):
-   - `RESEND_API_KEY=tu_api_key_de_resend`
+2. Configura las variables de entorno en la plataforma:
+   - `GROQ_API_KEY=tu_api_key_de_groq` (requerido)
+   - `GROQ_MODEL=llama-3.3-70b-versatile` (opcional, por defecto usa este modelo)
+   - `RESEND_API_KEY=tu_api_key_de_resend` (opcional, para notificaciones)
 3. Despliega
 
 ### Docker
