@@ -238,6 +238,9 @@ export function parseChatWithRules(chatText: string, category: string): ParseRes
   let pendingCount = 0;
   let idCounter = 1;
   
+  // Detectar el nombre del dueño del negocio (quien envía mensajes como confirmaciones)
+  const ownerName = detectOwnerName(lines);
+  
   for (const line of lines) {
     if (!isRelevantLine(line)) {
       continue;
@@ -304,4 +307,33 @@ export function parseChatWithRules(chatText: string, category: string): ParseRes
     summary,
     items,
   };
+}
+
+function detectOwnerName(lines: string[]): string {
+  // Detectar el nombre del dueño del negocio analizando los mensajes
+  // El dueño suele ser quien envía mensajes de confirmación o cierre
+  const nameCounts = new Map<string, number>();
+  
+  for (const line of lines) {
+    const cleaned = line.replace(/^\[?\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}[\s\d:]*[\]\s]*/, "");
+    const nameMatch = cleaned.match(/^([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)\s*[:\-]/);
+    
+    if (nameMatch) {
+      const name = nameMatch[1];
+      // Contar ocurrencias de cada nombre
+      nameCounts.set(name, (nameCounts.get(name) || 0) + 1);
+    }
+  }
+  
+  // El dueño suele ser el que más mensajes envía
+  let maxCount = 0;
+  let ownerName = "";
+  for (const [name, count] of nameCounts.entries()) {
+    if (count > maxCount) {
+      maxCount = count;
+      ownerName = name;
+    }
+  }
+  
+  return ownerName;
 }
