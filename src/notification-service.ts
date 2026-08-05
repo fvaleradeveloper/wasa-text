@@ -84,7 +84,7 @@ Total suscriptores: ${signup.totalSignups}
   `;
 
   try {
-    await client.emails.send({
+    const data = await client.emails.send({
       from: "Wasa-Text <notifications@resend.dev>",
       to: [ownerEmail],
       subject: `🎉 Nuevo suscriptor: ${signup.email}`,
@@ -98,8 +98,11 @@ Total suscriptores: ${signup.totalSignups}
       ],
     });
     console.log(`✅ Notification email sent to ${ownerEmail} about ${signup.email}`);
-  } catch (error) {
-    console.error("Error sending notification email:", error);
+    console.log(`📧 Resend response:`, JSON.stringify(data, null, 2));
+  } catch (error: any) {
+    console.error("❌ Error sending notification email:", error);
+    console.error("❌ Error details:", error?.message || error);
+    console.error("❌ Error response:", error?.response?.data || error?.response);
     // Don't throw - we don't want to block the signup process
   }
 }
